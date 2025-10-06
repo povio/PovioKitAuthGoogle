@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import PovioKitAuthCore
 
 public extension GoogleAuthenticator {
   struct Response {
