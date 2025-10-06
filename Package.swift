@@ -13,7 +13,7 @@ let package = Package(
   ],
   dependencies: [
     .package(url: "https://github.com/google/GoogleSignIn-iOS", .upToNextMajor(from: "9.0.0")),
-    .package(url: "https://github.com/povio/PovioKitAuth", branch: "release/3.0.0")
+    .package(url: "https://github.com/povio/PovioKitAuth", .upToNextMajor(from: "3.0.0"))
   ],
   targets: [
     .target(
