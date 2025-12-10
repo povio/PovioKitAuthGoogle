@@ -27,7 +27,8 @@ extension GoogleAuthenticator: Authenticator {
     from presentingViewController: UIViewController,
     clientId: String? = nil,
     hint: String? = .none,
-    additionalScopes: [String]? = .none
+    additionalScopes: [String]? = .none,
+		nonce: Nonce? = nil
   ) async throws -> Response {
     guard !provider.hasPreviousSignIn() else {
       return try await restorePreviousSignIn()
@@ -39,7 +40,8 @@ extension GoogleAuthenticator: Authenticator {
     return try await signInUser(
       from: presentingViewController,
       hint: hint,
-      additionalScopes: additionalScopes
+      additionalScopes: additionalScopes,
+			nonce: nonce?.value
     )
   }
   
@@ -85,14 +87,16 @@ private extension GoogleAuthenticator {
   func signInUser(
     from presentingViewController: UIViewController,
     hint: String?,
-    additionalScopes: [String]?
+    additionalScopes: [String]?,
+		nonce: String?
   ) async throws -> Response {
     try await withCheckedThrowingContinuation { continuation in
       provider
         .signIn(
           withPresenting: presentingViewController,
           hint: hint,
-          additionalScopes: additionalScopes
+          additionalScopes: additionalScopes,
+					nonce: nonce
         ) { result, error in
           switch (result, error) {
           case (let signInResult?, _):
