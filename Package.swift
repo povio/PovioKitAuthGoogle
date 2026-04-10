@@ -24,6 +24,11 @@ let package = Package(
       ],
       path: "Sources",
       resources: [.copy("../Resources/PrivacyInfo.xcprivacy")]
+    ),
+    .testTarget(
+      name: "PovioKitAuthGoogleTests",
+      dependencies: ["PovioKitAuthGoogle"],
+      path: "Tests"
     )
   ]
 )
