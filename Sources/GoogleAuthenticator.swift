@@ -63,7 +63,7 @@ extension GoogleAuthenticator: Authenticator {
     application: UIApplication,
     options: [UIApplication.OpenURLOptionsKey : Any]
   ) -> Bool {
-    GIDSignIn.sharedInstance.handle(url)
+    provider.handle(url)
   }
 }
 
