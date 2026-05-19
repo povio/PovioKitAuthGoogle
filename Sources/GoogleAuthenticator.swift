@@ -9,120 +9,162 @@
 import Foundation
 import GoogleSignIn
 import PovioKitAuthCore
+import UIKit
 
 public final class GoogleAuthenticator {
-  private let provider: GIDSignIn
-  
+  private let provider: any GoogleSignInProviding
+  private var signInContinuation: CheckedContinuation<Response, Swift.Error>?
+
   public init() {
-    self.provider = GIDSignIn.sharedInstance
+    self.provider = LiveGoogleSignInProvider()
+  }
+
+  init(provider: any GoogleSignInProviding) {
+    self.provider = provider
   }
 }
 
-// MARK: - Public Methods
+// MARK: - Authenticator
 extension GoogleAuthenticator: Authenticator {
-  /// SignIn user.
-  ///
-  /// Will asynchronously return the `Response` object on success or `Error` on error.
-  public func signIn(
-    from presentingViewController: UIViewController,
-    clientId: String? = nil,
-    hint: String? = .none,
-    additionalScopes: [String]? = .none,
-		nonce: Nonce? = nil
-  ) async throws -> Response {
-    guard !provider.hasPreviousSignIn() else {
-      return try await restorePreviousSignIn()
-    }
-    
-    // set clientId if provided (clientId is needed when doing auth via firebase)
-    clientId.map { provider.configuration = .init(clientID: $0) }
-    
-    return try await signInUser(
-      from: presentingViewController,
-      hint: hint,
-      additionalScopes: additionalScopes,
-			nonce: nonce?.value
-    )
-  }
-  
-  /// Clears the signIn footprint and logs out the user immediatelly.
+  /// Clears the signIn footprint and logs out the user immediately.
   public func signOut() {
-    provider.signOut()
+    performSignOut()
   }
-  
-  /// Returns the current authentication state.
+
+  /// Whether Google has a stored session that can be restored without showing the sign-in UI.
+  public var hasSavedSession: Bool {
+    SessionStateEvaluator.hasSavedSession(hasPreviousSignIn: provider.hasPreviousSignIn())
+  }
+
+  /// Returns the current authentication state (active session with a non-expired access token).
   public var isAuthenticated: Authenticated {
-    provider.hasPreviousSignIn()
+    SessionStateEvaluator.isAuthenticated(currentUser: provider.currentUser)
   }
-  
+
   /// Boolean if given `url` should be handled.
   ///
   /// Call this from UIApplicationDelegate’s `application:openURL:options:` method.
   public func canOpenUrl(
     _ url: URL,
     application: UIApplication,
-    options: [UIApplication.OpenURLOptionsKey : Any]
+    options: [UIApplication.OpenURLOptionsKey: Any]
   ) -> Bool {
     provider.handle(url)
   }
 }
 
+// MARK: - Sign In
+public extension GoogleAuthenticator {
+  /// SignIn user.
+  ///
+  /// Will asynchronously return the `Response` object on success or `Error` on error.
+  @MainActor
+  func signIn(
+    from presentingViewController: UIViewController,
+    clientId: String? = nil,
+    hint: String? = .none,
+    additionalScopes: [String]? = .none,
+    nonce: Nonce? = nil
+  ) async throws -> Response {
+    guard signInContinuation == nil else { throw GoogleAuthenticator.Error.signInInProgress }
+
+    guard !provider.hasPreviousSignIn() else {
+      return try await restorePreviousSignIn()
+    }
+
+    // set clientId if provided (clientId is needed when doing auth via firebase)
+    clientId.map { provider.configuration = .init(clientID: $0) }
+
+    return try await signInUser(
+      from: presentingViewController,
+      hint: hint,
+      additionalScopes: additionalScopes,
+      nonce: nonce?.value
+    )
+  }
+}
+
 // MARK: - Private Methods
 private extension GoogleAuthenticator {
+  func performSignOut() {
+    if Thread.isMainThread {
+      MainActor.assumeIsolated { resolveSignInAndSignOut() }
+    } else {
+      DispatchQueue.main.sync {
+        MainActor.assumeIsolated { resolveSignInAndSignOut() }
+      }
+    }
+  }
+
+  @MainActor
+  func resolveSignInAndSignOut() {
+    resolveSignIn(with: .failure(.cancelled))
+    provider.signOut()
+  }
+
+  @MainActor
   func restorePreviousSignIn() async throws -> Response {
-    try await withCheckedThrowingContinuation { continuation in
+    try await withSignInContinuation { _ in
       provider.restorePreviousSignIn { user, error in
-        if let user = user {
-          continuation.resume(returning: user.authResponse)
-        } else if let error = error {
-          continuation.resume(throwing: Error.system(error))
-        } else {
-          continuation.resume(throwing: Error.unhandledAuthorization)
+        Task { @MainActor in
+          if let user {
+            self.resolveSignIn(with: .success(user.authResponse))
+          } else if let error {
+            self.resolveSignIn(with: .failure(.system(error)))
+          } else {
+            self.resolveSignIn(with: .failure(.unhandledAuthorization))
+          }
         }
       }
     }
   }
-  
+
   @MainActor
   func signInUser(
     from presentingViewController: UIViewController,
     hint: String?,
     additionalScopes: [String]?,
-		nonce: String?
+    nonce: String?
   ) async throws -> Response {
-    try await withCheckedThrowingContinuation { continuation in
-      provider
-        .signIn(
-          withPresenting: presentingViewController,
-          hint: hint,
-          additionalScopes: additionalScopes,
-					nonce: nonce
-        ) { result, error in
-          switch (result, error) {
-          case (let signInResult?, _):
-            continuation.resume(returning: signInResult.user.authResponse)
-          case (_, let actualError?):
-            let errorCode = (actualError as NSError).code
-            if errorCode == GIDSignInError.Code.canceled.rawValue {
-              continuation.resume(throwing: Error.cancelled)
-            } else {
-              continuation.resume(throwing: Error.system(actualError))
-            }
-          case (.none, .none):
-            continuation.resume(throwing: Error.unhandledAuthorization)
-          }
+    try await withSignInContinuation { _ in
+      provider.signIn(
+        withPresenting: presentingViewController,
+        hint: hint,
+        additionalScopes: additionalScopes,
+        nonce: nonce
+      ) { result, error in
+        Task { @MainActor in
+          self.resolveSignIn(
+            with: SignInCallbackResolver.resolve(
+              user: result?.user,
+              error: error,
+              mapUser: { $0.authResponse }
+            )
+          )
         }
+      }
     }
   }
-}
 
-// MARK: - Error
-public extension GoogleAuthenticator {
-  enum Error: Swift.Error {
-    case system(_ error: Swift.Error)
-    case cancelled
-    case unhandledAuthorization
-    case alreadySignedIn
+  func withSignInContinuation(
+    _ operation: (CheckedContinuation<Response, Swift.Error>) -> Void
+  ) async throws -> Response {
+    try await withCheckedThrowingContinuation { continuation in
+      signInContinuation = continuation
+      operation(continuation)
+    }
+  }
+
+  @MainActor
+  func resolveSignIn(with result: Result<Response, GoogleAuthenticator.Error>) {
+    guard let continuation = signInContinuation else { return }
+    signInContinuation = nil
+    switch result {
+    case .success(let response):
+      continuation.resume(returning: response)
+    case .failure(let error):
+      continuation.resume(throwing: error)
+    }
   }
 }
 
@@ -132,7 +174,7 @@ private extension GIDGoogleUser {
     var nameComponents = PersonNameComponents()
     nameComponents.givenName = profile?.givenName
     nameComponents.familyName = profile?.familyName
-    
+
     return .init(
       userId: userID,
       idToken: idToken?.tokenString,
