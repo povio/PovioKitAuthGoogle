@@ -20,7 +20,7 @@ let package = Package(
       name: "PovioKitAuthGoogle",
       dependencies: [
         .product(name: "PovioKitAuthCore", package: "PovioKitAuth"),
-        .product(name: "GoogleSignInSwift", package: "GoogleSignIn-iOS")
+        .product(name: "GoogleSignIn", package: "GoogleSignIn-iOS")
       ],
       path: "Sources",
       resources: [.copy("../Resources/PrivacyInfo.xcprivacy")]
