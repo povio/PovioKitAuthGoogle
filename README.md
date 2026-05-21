@@ -1,13 +1,9 @@
 <p align="center">
-    <img src="Resources/PovioKit.png" width="400" max-width="90%" alt="PovioKit" />
-</p>
-
-<p align="center">
-    <a href="https://swiftpackageregistry.com/poviolabs/PovioKitAuth" alt="Package">
+    <a href="https://github.com/povio/PovioKitAuthGoogle" alt="Package">
         <img src="https://img.shields.io/badge/SPM-Swift-lightgrey.svg" />
     </a>
     <a href="https://www.swift.org" alt="Swift">
-        <img src="https://img.shields.io/badge/Swift-5-orange.svg" />
+        <img src="https://img.shields.io/badge/Swift-5.9-orange.svg" />
     </a>
     <a href="./LICENSE" alt="License">
         <img src="https://img.shields.io/badge/Licence-MIT-red.svg" />
@@ -23,7 +19,7 @@
 
 ### Swift Package Manager
 - In Xcode, click `File` -> `Add Packages...`  
-- Insert `https://github.com/poviolabs/PovioKitAuthGoogle` in the Search field.
+- Insert `https://github.com/povio/PovioKitAuthGoogle` in the Search field.
 - Select a desired `Dependency Rule`. Usually "Up to Next Major Version" with "1.0.0".
 - Select "Add Package" button and check `PovioKitAuthGoogle`.
 - Select "Add Package" again and you are done.
@@ -35,6 +31,9 @@ Please read [official documentation](https://developers.google.com/identity/sign
 ## Usage
 
 ```swift
+import PovioKitAuthCore
+import PovioKitAuthGoogle
+
 // initialization
 let authenticator = GoogleAuthenticator()
 
@@ -42,14 +41,25 @@ let authenticator = GoogleAuthenticator()
 let result = try await authenticator
   .signIn(from: <view-controller-instance>)
 
-// get authentication status
-let state = authenticator.isAuthenticated
+// signIn with Firebase (custom client ID + nonce)
+let firebaseResult = try await authenticator.signIn(
+  from: <view-controller-instance>,
+  clientId: "<firebase-client-id>",
+  nonce: .random(length: 32)
+)
+
+// active session with a non-expired access token
+let isSignedIn = authenticator.isAuthenticated
+
+// Google has a stored session that can be restored (e.g. show "Continue as …")
+let canRestore = authenticator.hasSavedSession
 
 // signOut user
-authenticator.signOut() // all provider data regarding the use auth is cleared at this point
+authenticator.signOut() // all provider data regarding the user auth is cleared at this point
 
 // handle url
-authenticator.canOpenUrl(_: application: options:) // call this from `application:openURL:options:` in UIApplicationDelegate
+authenticator.canOpenUrl(url, application: application, options: options)
+// call this from `application:openURL:options:` in UIApplicationDelegate
 ```
 
 ## License
