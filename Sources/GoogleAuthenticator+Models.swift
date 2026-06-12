@@ -9,7 +9,7 @@
 import Foundation
 
 public extension GoogleAuthenticator {
-  struct Response {
+  struct Response: Sendable {
     public let userId: String?
     public let idToken: String?
     public let accessToken: String
