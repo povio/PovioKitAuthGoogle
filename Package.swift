@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
   name: "PovioKitAuthGoogle",
   platforms: [
-    .iOS(.v16)
+    .iOS(.v18)
   ],
   products: [
     .library(name: "PovioKitAuthGoogle", targets: ["PovioKitAuthGoogle"])

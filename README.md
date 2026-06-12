@@ -3,7 +3,7 @@
         <img src="https://img.shields.io/badge/SPM-Swift-lightgrey.svg" />
     </a>
     <a href="https://www.swift.org" alt="Swift">
-        <img src="https://img.shields.io/badge/Swift-5.9-orange.svg" />
+        <img src="https://img.shields.io/badge/Swift-6.0-orange.svg" />
     </a>
     <a href="./LICENSE" alt="License">
         <img src="https://img.shields.io/badge/Licence-MIT-red.svg" />
@@ -20,7 +20,7 @@
 ### Swift Package Manager
 - In Xcode, click `File` -> `Add Packages...`  
 - Insert `https://github.com/povio/PovioKitAuthGoogle` in the Search field.
-- Select a desired `Dependency Rule`. Usually "Up to Next Major Version" with "1.0.0".
+- Select a desired `Dependency Rule`. Usually "Up to Next Major Version" with "2.0.0".
 - Select "Add Package" button and check `PovioKitAuthGoogle`.
 - Select "Add Package" again and you are done.
 
