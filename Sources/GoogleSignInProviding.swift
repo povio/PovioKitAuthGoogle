@@ -5,11 +5,11 @@
 //  Copyright © 2025 Povio Inc. All rights reserved.
 //
 
-import GoogleSignIn
+@preconcurrency import GoogleSignIn
 import UIKit
 
 /// Abstraction over `GIDSignIn` for testability.
-protocol GoogleSignInProviding: AnyObject {
+protocol GoogleSignInProviding: AnyObject, Sendable {
   var currentUser: GIDGoogleUser? { get }
   var configuration: GIDConfiguration? { get set }
   func hasPreviousSignIn() -> Bool
@@ -26,7 +26,7 @@ protocol GoogleSignInProviding: AnyObject {
   )
 }
 
-final class LiveGoogleSignInProvider: GoogleSignInProviding {
+final class LiveGoogleSignInProvider: GoogleSignInProviding, @unchecked Sendable {
   private let signIn: GIDSignIn
 
   init(signIn: GIDSignIn = .sharedInstance) {

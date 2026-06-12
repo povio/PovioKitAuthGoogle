@@ -7,13 +7,13 @@
 //
 
 import Foundation
-import GoogleSignIn
+@preconcurrency import GoogleSignIn
 import PovioKitAuthCore
 import UIKit
 
-public final class GoogleAuthenticator {
+public final class GoogleAuthenticator: Sendable {
   private let provider: any GoogleSignInProviding
-  private var signInContinuation: CheckedContinuation<Response, Swift.Error>?
+  @MainActor private var signInContinuation: CheckedContinuation<Response, Swift.Error>?
 
   public init() {
     self.provider = LiveGoogleSignInProvider()
@@ -146,6 +146,7 @@ private extension GoogleAuthenticator {
     }
   }
 
+  @MainActor
   func withSignInContinuation(
     _ operation: (CheckedContinuation<Response, Swift.Error>) -> Void
   ) async throws -> Response {

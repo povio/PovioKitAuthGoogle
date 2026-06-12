@@ -1,8 +1,8 @@
-import GoogleSignIn
+@preconcurrency import GoogleSignIn
 import UIKit
 @testable import PovioKitAuthGoogle
 
-final class MockGoogleSignInProvider: GoogleSignInProviding {
+final class MockGoogleSignInProvider: GoogleSignInProviding, @unchecked Sendable {
   var currentUser: GIDGoogleUser?
   var configuration: GIDConfiguration?
   var hasPreviousSignInValue = false
