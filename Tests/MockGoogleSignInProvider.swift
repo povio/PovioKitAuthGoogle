@@ -13,7 +13,7 @@ final class MockGoogleSignInProvider: GoogleSignInProviding, @unchecked Sendable
   private(set) var signInCalls = 0
 
   var restorePreviousSignInHandler: ((
-    @escaping (GIDGoogleUser?, Error?) -> Void
+    @escaping @Sendable (GIDGoogleUser?, Error?) -> Void
   ) -> Void)?
 
   var signInHandler: ((
@@ -21,7 +21,7 @@ final class MockGoogleSignInProvider: GoogleSignInProviding, @unchecked Sendable
     String?,
     [String]?,
     String?,
-    @escaping (GIDSignInResult?, Error?) -> Void
+    @escaping @Sendable (GIDSignInResult?, Error?) -> Void
   ) -> Void)?
 
   func hasPreviousSignIn() -> Bool {
@@ -39,7 +39,7 @@ final class MockGoogleSignInProvider: GoogleSignInProviding, @unchecked Sendable
     handleResult
   }
 
-  func restorePreviousSignIn(completion: @escaping (GIDGoogleUser?, Error?) -> Void) {
+  func restorePreviousSignIn(completion: @escaping @Sendable (GIDGoogleUser?, Error?) -> Void) {
     restorePreviousSignInCalls += 1
     restorePreviousSignInHandler?(completion)
   }
@@ -49,7 +49,7 @@ final class MockGoogleSignInProvider: GoogleSignInProviding, @unchecked Sendable
     hint: String?,
     additionalScopes: [String]?,
     nonce: String?,
-    completion: @escaping (GIDSignInResult?, Error?) -> Void
+    completion: @escaping @Sendable (GIDSignInResult?, Error?) -> Void
   ) {
     signInCalls += 1
     signInHandler?(viewController, hint, additionalScopes, nonce, completion)
