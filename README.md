@@ -20,7 +20,7 @@
 ### Swift Package Manager
 - In Xcode, click `File` -> `Add Packages...`  
 - Insert `https://github.com/povio/PovioKitAuthGoogle` in the Search field.
-- Select a desired `Dependency Rule`. Usually "Up to Next Major Version" with "2.0.0".
+- Select a desired `Dependency Rule`. Usually "Up to Next Major Version" with "3.0.0".
 - Select "Add Package" button and check `PovioKitAuthGoogle`.
 - Select "Add Package" again and you are done.
 

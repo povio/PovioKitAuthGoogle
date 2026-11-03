@@ -16,13 +16,13 @@ protocol GoogleSignInProviding: AnyObject, Sendable {
   func signOut()
   @discardableResult
   func handle(_ url: URL) -> Bool
-  func restorePreviousSignIn(completion: @escaping (GIDGoogleUser?, Error?) -> Void)
+  func restorePreviousSignIn(completion: @escaping @Sendable (GIDGoogleUser?, Error?) -> Void)
   func signIn(
     withPresenting viewController: UIViewController,
     hint: String?,
     additionalScopes: [String]?,
     nonce: String?,
-    completion: @escaping (GIDSignInResult?, Error?) -> Void
+    completion: @escaping @Sendable (GIDSignInResult?, Error?) -> Void
   )
 }
 
@@ -53,7 +53,7 @@ final class LiveGoogleSignInProvider: GoogleSignInProviding, @unchecked Sendable
     signIn.handle(url)
   }
 
-  func restorePreviousSignIn(completion: @escaping (GIDGoogleUser?, Error?) -> Void) {
+  func restorePreviousSignIn(completion: @escaping @Sendable (GIDGoogleUser?, Error?) -> Void) {
     signIn.restorePreviousSignIn(completion: completion)
   }
 
@@ -62,7 +62,7 @@ final class LiveGoogleSignInProvider: GoogleSignInProviding, @unchecked Sendable
     hint: String?,
     additionalScopes: [String]?,
     nonce: String?,
-    completion: @escaping (GIDSignInResult?, Error?) -> Void
+    completion: @escaping @Sendable (GIDSignInResult?, Error?) -> Void
   ) {
     signIn.signIn(
       withPresenting: viewController,

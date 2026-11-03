@@ -12,8 +12,8 @@ let package = Package(
     .library(name: "PovioKitAuthGoogle", targets: ["PovioKitAuthGoogle"])
   ],
   dependencies: [
-    .package(url: "https://github.com/google/GoogleSignIn-iOS", .upToNextMajor(from: "9.0.0")),
-    .package(url: "https://github.com/povio/PovioKitAuth", .upToNextMajor(from: "3.0.0"))
+    .package(url: "https://github.com/google/GoogleSignIn-iOS", .upToNextMajor(from: "10.1.0")),
+    .package(url: "https://github.com/povio/PovioKitAuth", .upToNextMajor(from: "4.0.0"))
   ],
   targets: [
     .target(

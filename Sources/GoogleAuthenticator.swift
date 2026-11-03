@@ -106,14 +106,17 @@ private extension GoogleAuthenticator {
   func restorePreviousSignIn() async throws -> Response {
     try await withSignInContinuation { _ in
       provider.restorePreviousSignIn { user, error in
+        // map to a Sendable result here, since `GIDGoogleUser` can't cross to the main actor
+        let signInResult: Result<Response, GoogleAuthenticator.Error>
+        if let user {
+          signInResult = .success(user.authResponse)
+        } else if let error {
+          signInResult = .failure(.system(error))
+        } else {
+          signInResult = .failure(.unhandledAuthorization)
+        }
         Task { @MainActor in
-          if let user {
-            self.resolveSignIn(with: .success(user.authResponse))
-          } else if let error {
-            self.resolveSignIn(with: .failure(.system(error)))
-          } else {
-            self.resolveSignIn(with: .failure(.unhandledAuthorization))
-          }
+          self.resolveSignIn(with: signInResult)
         }
       }
     }
@@ -133,14 +136,14 @@ private extension GoogleAuthenticator {
         additionalScopes: additionalScopes,
         nonce: nonce
       ) { result, error in
+        // map to a Sendable result here, since `GIDSignInResult` can't cross to the main actor
+        let signInResult = SignInCallbackResolver.resolve(
+          user: result?.user,
+          error: error,
+          mapUser: { $0.authResponse }
+        )
         Task { @MainActor in
-          self.resolveSignIn(
-            with: SignInCallbackResolver.resolve(
-              user: result?.user,
-              error: error,
-              mapUser: { $0.authResponse }
-            )
-          )
+          self.resolveSignIn(with: signInResult)
         }
       }
     }
